@@ -18,9 +18,9 @@ def location_quotient(df, totals, value_col='EMP', naics_col='NAICS2012', geog_c
     value_col : str, optional
         Name of column with the count of interest (jobs or establishments)
     naics_col : str, optional
-        Name of column with the NAICS code in small_df
+        Name of column with the NAICS code in df
     geog_col : str, optional
-        Name of column with the geography (e.g. county) in small_df
+        Name of column with the geography (e.g. county) in df
 
     Returns
     -------
@@ -28,19 +28,19 @@ def location_quotient(df, totals, value_col='EMP', naics_col='NAICS2012', geog_c
     """
 
     if not isinstance(df, DataFrame):
-        raise TypeError('small_df must be DataFrame')
+        raise TypeError('df must be DataFrame')
 
     if value_col not in df.columns:
-        raise ValueError('Name passed to value_col not found in small_df column names')
+        raise ValueError('Name passed to value_col not found in df column names')
 
     if naics_col not in df.columns:
-        raise ValueError('Name passed to naics_col not found in small_df column names')
+        raise ValueError('Name passed to naics_col not found in df column names')
 
     if geog_col not in df.columns:
-        raise ValueError('Name passed to geog_col not found in small_df column names')
+        raise ValueError('Name passed to geog_col not found in df column names')
 
     if not isinstance(totals, DataFrame):
-        raise TypeError('large_df must be DataFrame')
+        raise TypeError('totals must be DataFrame')
 
     df = pd.DataFrame(data=df)
     df['location_quotient'] = None
