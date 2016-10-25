@@ -1,0 +1,6 @@
+cbp/secrets.py
+*.pyc
+.idea
+.ipynb_checkpoints/
+*.docx
+prototyping.ipynb
