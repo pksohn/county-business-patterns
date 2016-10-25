@@ -3,18 +3,18 @@ import pandas as pd
 from pandas import DataFrame
 
 
-def location_quotient(small_df, large_df, value_col='EMP', naics_col='NAICS2012', geog_col='county'):
+def location_quotient(df, totals, value_col='EMP', naics_col='NAICS2012', geog_col='county'):
     """
     Calculates location quotient for each row in a DataFrame of smaller geographies (e.g. counties) when compared to
     a DataFrame of the same indicator (job or establishment counts) in a larger geography (e.g. state).
 
     Parameters
     ----------
-    small_df : DataFrame
+    df : DataFrame
         DataFrame where each row includes a count of jobs or establishments for one NAICS industry in one geography.
-    large_df : DataFrame
-        DataFrame where each row is the larger geography total in a NAICS industry. The Counties.total() method
-        provides this format. DataFrame must be indexed by NAICS code and must include the same value_col.
+    totals : DataFrame
+        DataFrame where each row is the larger geography total in a NAICS industry. DataFrame must be indexed by NAICS
+        code and must include the same value_col. The Counties.total() method provides this format.
     value_col : str, optional
         Name of column with the count of interest (jobs or establishments)
     naics_col : str, optional
@@ -27,22 +27,22 @@ def location_quotient(small_df, large_df, value_col='EMP', naics_col='NAICS2012'
 
     """
 
-    if not isinstance(small_df, DataFrame):
+    if not isinstance(df, DataFrame):
         raise TypeError('small_df must be DataFrame')
 
-    if value_col not in small_df.columns:
+    if value_col not in df.columns:
         raise ValueError('Name passed to value_col not found in small_df column names')
 
-    if naics_col not in small_df.columns:
+    if naics_col not in df.columns:
         raise ValueError('Name passed to naics_col not found in small_df column names')
 
-    if geog_col not in small_df.columns:
+    if geog_col not in df.columns:
         raise ValueError('Name passed to geog_col not found in small_df column names')
 
-    if not isinstance(large_df, DataFrame):
+    if not isinstance(totals, DataFrame):
         raise TypeError('large_df must be DataFrame')
 
-    df = pd.DataFrame(data=small_df)
+    df = pd.DataFrame(data=df)
     df['location_quotient'] = None
 
     for index, row in df.iterrows():
@@ -58,8 +58,8 @@ def location_quotient(small_df, large_df, value_col='EMP', naics_col='NAICS2012'
         numerator = E_industry_small / E_total_small
 
         # Denominator
-        E_industry_large = large_df.loc[naics, value_col]
-        E_total_large = large_df.loc['00', value_col]
+        E_industry_large = totals.loc[naics, value_col]
+        E_total_large = totals.loc['00', value_col]
 
         denominator = E_industry_large / E_total_large
 
