@@ -102,20 +102,31 @@ def location_quotient(small, large):
     return df.location_quotient
 
 
-def shift_share(small_old, small_new, large_old, large_new):
+def shift_share(small_old, small_new, large_old, large_new, total_row='00'):
     """
-    Calculates shift share given
+    Calculates shift share given Pandas Series of economic figures (e.g. jobs or establishments) over time in a smaller
+     (i.e. local) geography and a larger geography. Indices should be industries and must be identical across all
+     four Series.
 
     Parameters
     ----------
-    small_old
-    small_new
-    large_old
-    large_new
+    small_old : Series
+        Series of smaller geography in 'before' time period
+    small_new : Series
+        Series of smaller geography in 'after' time period
+    large_old : Series
+        Series of larger geography in 'before' time period
+    large_new : Series
+        Series of larger geography in 'after' time period
+    total_row : str, optional
+        Row label if there is an existing row of totals. This row will not be summed up for summary tables.
 
     Returns
     -------
-
+    df : DataFrame
+        DataFrame of results at the industry level
+    res : DataFrame
+        Summary of shift-share results
     """
 
     if not all(isinstance(i, pd.Series) for i in [small_old, small_new, large_old, large_new]):
@@ -131,14 +142,14 @@ def shift_share(small_old, small_new, large_old, large_new):
         raise ValueError('large index must include all values of small index')
 
     df = pd.DataFrame(small_old)
-    df.columns = 'small_old'
+    df.columns = ['small_old']
     df['small_new'] = small_new
     df['large_old'] = large_old
     df['large_new'] = large_new
 
     # Large Growth Share
     large_growth_rate = (df.large_new['00'] - df.large_old['00']) / df.large_old['00']
-    df['large_growth_share'] = df['small_old'] * large_new
+    df['large_growth_share'] = df['small_old'] * large_growth_rate
 
     # Industry Mix
     df['large_industry_growth_rate'] = (df.large_new - df.large_old) / df.large_old
@@ -154,4 +165,34 @@ def shift_share(small_old, small_new, large_old, large_new):
                                                         row['large_industry_growth_rate']),
                                            axis=1)
 
-    return df
+    # Results summary
+
+    if total_row:
+        df1 = df[df.index != total_row]
+    else:
+        df1 = df
+
+    res = pd.DataFrame()
+
+    res.loc['small_growth', 'description'] = 'Growth in smaller geography'
+    res.loc['small_growth', 'absolute'] = df1.small_new.sum() - df1.small_old.sum()
+    res.loc['small_growth', 'percentage'] = (df1.small_new.sum() - df1.small_old.sum()) / df1.small_old.sum()
+
+    res.loc['large_growth', 'description'] = 'Growth in larger geography'
+    res.loc['large_growth', 'absolute'] = df1.large_new.sum() - df1.large_old.sum()
+    res.loc['large_growth', 'percentage'] = (df1.large_new.sum() - df1.large_old.sum()) / df1.large_old.sum()
+
+    res.loc['large_growth_share', 'description'] = 'Growth attributable to larger geography growth rate'
+    res.loc['large_growth_share', 'absolute'] = df1.large_growth_share.sum()
+    res.loc['large_growth_share', 'percentage'] = df1.large_growth_share.sum() / res.loc['small_growth', 'absolute']
+
+    res.loc['industry_mix', 'description'] = 'Growth attributable to industry mix'
+    res.loc['industry_mix', 'absolute'] = df1.industry_mix.sum()
+    res.loc['industry_mix', 'percentage'] = df1.industry_mix.sum() / res.loc['small_growth', 'absolute']
+
+    res.loc['local_competitiveness', 'description'] = 'Growth attributable to local competitiveness'
+    res.loc['local_competitiveness', 'absolute'] = df1.local_competitiveness.sum()
+    res.loc['local_competitiveness', 'percentage'] = df1.local_competitiveness.sum() / res.loc[
+        'small_growth', 'absolute']
+
+    return df, res
