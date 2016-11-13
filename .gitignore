@@ -1,6 +1,10 @@
-cbp/secrets.py
+notebooks/secrets.py
 *.pyc
 .idea
 .ipynb_checkpoints/
 *.docx
-prototyping.ipynb
+notebooks/prototyping.ipynb
+*.zip
+*.txt
+*.csv
+*.xls

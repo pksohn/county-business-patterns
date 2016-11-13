@@ -3,6 +3,16 @@ from pandas import DataFrame
 import requests
 import sys
 
+naics_year = {
+    2014: 'NAICS2012',
+    2013: 'NAICS2012',
+    2012: 'NAICS2012',
+    2011: 'NAICS2007',
+    2010: 'NAICS2007',
+    2009: 'NAICS2007',
+    2008: 'NAICS2007'
+}
+
 
 class Counties(DataFrame):
     """
@@ -12,7 +22,7 @@ class Counties(DataFrame):
     ----------
     state_fips : str
         Two-digit FIPS code for the state
-    year : str, optional
+    year : str or int, optional
         Year of data to download (if downloading data). Default is 2015.
     read_from : str, optional
         Must be one of 'api' and 'csv'. Default is 'api'.
@@ -71,7 +81,7 @@ class Counties(DataFrame):
 
         DataFrame.__init__(self, data=data)
 
-    def county(self, county):
+    def get_county(self, county):
         """
         Returns a subset of the Counties DataFrame for one or more specified counties.
 
@@ -87,7 +97,7 @@ class Counties(DataFrame):
         """
 
         if isinstance(county, list):
-            result = self[self.county in county]
+            result = self[self.county.isin(county)]
         elif isinstance(county, str):
             result = self[self.county == county]
         else:
