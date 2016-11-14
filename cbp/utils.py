@@ -56,7 +56,7 @@ def update_naics(years, old_series):
     return translation['new_naics']
 
 
-def location_quotient(small, large):
+def location_quotient(small, large, total_row='00'):
     """
     Calculates location quotient given two Pandas Series with equivalent industry identifiers.
 
@@ -66,6 +66,8 @@ def location_quotient(small, large):
         Series of smaller geography
     large : Series
         Series of larger geography
+    total_row : str, optional
+        Row label for existing row of totals
 
     Returns
     -------
@@ -85,7 +87,7 @@ def location_quotient(small, large):
     for index, row in df.iterrows():
         # Numerator
         E_industry_small = row.small
-        total_emp_row = df.loc['00']
+        total_emp_row = df.loc[total_row]
         E_total_small = total_emp_row.small
 
         numerator = E_industry_small / E_total_small
@@ -196,3 +198,59 @@ def shift_share(small_old, small_new, large_old, large_new, total_row='00'):
         'small_growth', 'absolute']
 
     return df, res
+
+
+def specialization_coefficient(small, large, total_row='00'):
+    """
+    Calculates coefficient of specialization given two Pandas Series with equivalent industry identifiers.
+
+    Parameters
+    ----------
+    small : Series
+        Series of smaller geography
+    large : Series
+        Series of larger geography
+    total_row : str
+        Row label for an existing row of totals
+
+    Returns
+    -------
+    float
+    """
+
+    if not all(isinstance(i, pd.Series) for i in [small, large]):
+        raise TypeError('small and large must be Series')
+
+    if not all(i in large.index for i in small.index):
+        raise ValueError('large index must include all values of small index')
+
+    df = pd.DataFrame(data=small)
+    df.columns = ['small']
+    df['large'] = large
+
+    small_total = df.loc[total_row, 'small']
+    large_total = df.loc[total_row, 'large']
+
+    for index, row in df.iterrows():
+
+        # Calculation from http://leddris.aegean.gr/ses-parameters/321-coefficient-of-specialization.html
+
+        # Sector figure in small geography
+        # Divided by
+        # Total figure in small geography
+        small_component = row.small / small_total
+        df.loc[index, 'small_per'] = small_component
+
+        # Sector figure in large geography
+        # Divided by
+        # Total figure in large geography
+        large_component = row.large / large_total
+        df.loc[index, 'large_per'] = large_component
+
+        cs_sector = abs(small_component - large_component)
+        df.loc[index, 'diff'] = cs_sector
+
+    df_no_total = df.loc[df.index != total_row, :]
+    cs = df_no_total['diff'].sum() / 2
+
+    return df, cs
