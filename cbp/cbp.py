@@ -3,6 +3,19 @@ from pandas import DataFrame
 import requests
 import sys
 
+emp_imputation = {'a': 10,
+                  'b': 60,
+                  'c': 175,
+                  'e': 375,
+                  'f': 750,
+                  'g': 1750,
+                  'h': 3750,
+                  'i': 7500,
+                  'j': 17500,
+                  'k': 37500,
+                  'l': 75000,
+                  'm': 110000}
+
 naics_year = {
     2014: 'NAICS2012',
     2013: 'NAICS2012',
@@ -32,9 +45,14 @@ class Counties(DataFrame):
         List of variables (as str) to download, default list is provided
     filepath : str, optional
         File path to csv file if that option is desired
+    impute_emp : bool, optional
+        If True and read_from='api', imputes midpoint of employment range for industries with a flag \
+        instead of an estimate
+
     """
 
-    def __init__(self, state_fips, year=2014, read_from='api', key=None, variables=None, filepath=None):
+    def __init__(self, state_fips, year=2014, read_from='api', key=None, variables=None, filepath=None,
+                 impute_emp=True):
 
         dtypes = {
             'NAICS2012': str,
@@ -52,7 +70,7 @@ class Counties(DataFrame):
             if variables:
                 cbp_vars = ','.join(variables)
             else:
-                cbp_vars = 'EMP,ESTAB,NAICS2012,NAICS2012_TTL,GEO_TTL'
+                cbp_vars = 'EMP,EMP_F,ESTAB,NAICS2012,NAICS2012_TTL,GEO_TTL'
 
             url = '{baseurl}?get={cbp_vars}&for=county:*&in=state:{state_fips}&key={key}'.format(**locals())
 
@@ -67,7 +85,20 @@ class Counties(DataFrame):
             results.columns = results.iloc[0]
             results.drop(results.index[0], inplace=True)
 
+            cbp_dtypes = {
+                'EMP': int,
+                'ESTAB': int
+            }
+
+            for variable in cbp_dtypes.keys():
+                results[variable] = results[variable].astype(cbp_dtypes[variable])
+
             data = results
+
+            if impute_emp:
+                data['EMP'] = data.apply(lambda x: emp_imputation[x.EMP_F] if x.EMP_F else x.EMP, axis=1)
+
+            data.drop('EMP_F', axis=1, inplace=True)
 
         elif read_from == 'csv':
 
@@ -160,6 +191,34 @@ class Counties(DataFrame):
 
         else:
             return three_digits
+
+    def four_digit(self, county=None):
+        """
+        Returns a reduced version of the Counties DataFrame with only 4-digit NAICS codes, filtered by county if
+        optional parameter is passed.
+
+        Parameters
+        ----------
+        county : str or list, optional
+            County FIPS code or list of FIPS codes
+
+        Returns
+        -------
+
+        """
+        four_digits = self[(self.NAICS2012.str.len() == 4) | (self.NAICS2012 == '00')]
+
+        if county:
+            if isinstance(county, list):
+                result = four_digits[four_digits.county.isin(county)]
+            elif isinstance(county, str):
+                result = four_digits[four_digits.county == county]
+            else:
+                raise TypeError('County identifier must be str')
+            return result
+
+        else:
+            return four_digits
 
     def total(self):
         """
