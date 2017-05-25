@@ -1,3 +1,6 @@
+# Note: I'm writing a new, much improved version of this called "cbpy"
+In progress [here](https://github.com/pksohn/cbpy).
+
 # County Business Patterns wrapper and economic analysis tools
 
 This repository includes tools for downloading and working with County Business Patterns economic data from the US Census Bureau.
