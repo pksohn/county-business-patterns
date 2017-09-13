@@ -1,5 +1,4 @@
-# Note: I'm writing a new, much improved version of this called "cbpy"
-In progress [here](https://github.com/pksohn/cbpy).
+### Note: This is old and I would like to make a better version of this at some point.
 
 # County Business Patterns wrapper and economic analysis tools
 
